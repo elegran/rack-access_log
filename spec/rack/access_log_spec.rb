@@ -18,7 +18,7 @@ RSpec.describe Rack::AccessLog do
   let(:middleware_config) { {} }
 
   let(:uri) { '/rspec/test/uri?k=v' }
-  let(:options) { { :method => 'GET' } }
+  let(:options) { { :method => 'GET', input: 'body' }}
   let(:env) { Rack::MockRequest.env_for(uri, options) }
 
   let(:benchmark_result) { { :realtime => nil } }
@@ -34,12 +34,14 @@ RSpec.describe Rack::AccessLog do
     subject(:after_call) { middleware.call(env) }
 
     it { is_expected.to eq next_middleware_response }
+    it { after_call }
 
     it { expect { after_call }.to log_with logger, :info, hash_including(execution_time_sec: expected_realtime) }
     it { expect { after_call }.to log_with logger, :info, hash_including(request_method: 'GET') }
     it { expect { after_call }.to log_with logger, :info, hash_including(request_path: '/rspec/test/uri') }
     it { expect { after_call }.to log_with logger, :info, hash_including(query_string: 'k=v') }
     it { expect { after_call }.to log_with logger, :info, hash_including(response_status_code: 200) }
+    it { expect { after_call }.to log_with logger, :info, hash_including(body: 'body') }
 
     describe 'exclude_path option' do
       before { middleware_config[:exclude_path] = '/rspec/test/uri' }

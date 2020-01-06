@@ -28,7 +28,8 @@ module Rack
         remote_ip: request.ip || '-',
         request_path: request.path_info,
         query_string: request.query_string,
-        request_method: request.request_method
+        request_method: request.request_method,
+        body: request.body.string
       }
     end
 
