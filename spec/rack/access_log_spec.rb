@@ -18,7 +18,7 @@ RSpec.describe Rack::AccessLog do
   let(:middleware_config) { {} }
 
   let(:uri) { '/rspec/test/uri?k=v' }
-  let(:options) { { :method => 'GET', input: 'body' }}
+  let(:options) { { :method => 'GET', input: 'body' } }
   let(:env) { Rack::MockRequest.env_for(uri, options) }
 
   let(:benchmark_result) { { :realtime => nil } }
