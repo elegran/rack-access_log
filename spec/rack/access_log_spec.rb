@@ -18,7 +18,8 @@ RSpec.describe Rack::AccessLog do
   let(:middleware_config) { {} }
 
   let(:uri) { '/rspec/test/uri?k=v' }
-  let(:options) { { :method => 'GET', input: 'body' } }
+  let(:options) { { :method => 'GET', input: body } }
+  let(:body) { nil }
   let(:env) { Rack::MockRequest.env_for(uri, options) }
 
   let(:benchmark_result) { { :realtime => nil } }
@@ -41,57 +42,66 @@ RSpec.describe Rack::AccessLog do
     it { expect { after_call }.to log_with logger, :info, hash_including(request_path: '/rspec/test/uri') }
     it { expect { after_call }.to log_with logger, :info, hash_including(query_string: 'k=v') }
     it { expect { after_call }.to log_with logger, :info, hash_including(response_status_code: 200) }
-    it { expect { after_call }.to log_with logger, :info, hash_including(body: 'body') }
 
-    describe 'exclude_path option' do
-      before { middleware_config[:exclude_path] = '/rspec/test/uri' }
-
-      it 'not logs any log because the request path is exluded' do
-        expect(logger).to_not receive(:info)
-
-        after_call
-      end
+    context 'when the request ha no body' do
+      it { expect { after_call }.to log_with logger, :info, hash_including(body: '') }
     end
 
-    describe 'remote_ip' do
-      context 'when HTTP_X_FORWARDED_FOR given' do
-        before { env['HTTP_X_FORWARDED_FOR'] = 'forwarded-ip-addr' }
+    context 'when the request has body' do
+      let(:body) { 'body' }
 
-        it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: 'forwarded-ip-addr') }
-      end
+      it { expect { after_call }.to log_with logger, :info, hash_including(body: body) }
 
-      context 'when REMOTE_ADDR given' do
-        before { env['REMOTE_ADDR'] = 'remote-ip-addr' }
+      describe 'exclude_path option' do
+        before { middleware_config[:exclude_path] = '/rspec/test/uri' }
 
-        it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: 'remote-ip-addr') }
-      end
+        it 'not logs any log because the request path is exluded' do
+          expect(logger).to_not receive(:info)
 
-      context 'when nothing specifies remote addr' do
-        before { %w[REMOTE_ADDR HTTP_X_FORWARDED_FOR].each { |env_key| env.delete(env_key) } }
-
-        it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: '-') }
-      end
-    end
-
-    context 'when env values changed during the next middleware call' do
-      let(:next_middleware_logic) do
-        lambda do |env|
-          env['PATH_INFO'] = '/cat'
-          env['REQUEST_METHOD'] = 'NOPE_TRACE'
-          env['QUERY_STRING'] = 'q=no'
-          env['REMOTE_ADDR'] = 'yo mama!'
+          after_call
         end
       end
 
-      it { expect { after_call }.to log_with logger, :info, hash_including(request_method: 'GET') }
-      it { expect { after_call }.to log_with logger, :info, hash_including(request_path: '/rspec/test/uri') }
-      it { expect { after_call }.to log_with logger, :info, hash_including(query_string: 'k=v') }
-      it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: '-') }
+      describe 'remote_ip' do
+        context 'when HTTP_X_FORWARDED_FOR given' do
+          before { env['HTTP_X_FORWARDED_FOR'] = 'forwarded-ip-addr' }
 
-      context "and a not tracked path changes it's path_info" do
-        before { middleware_config[:exclude_path] = env[Rack::PATH_INFO] }
+          it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: 'forwarded-ip-addr') }
+        end
 
-        it { expect(logger).to_not receive(:info); after_call }
+        context 'when REMOTE_ADDR given' do
+          before { env['REMOTE_ADDR'] = 'remote-ip-addr' }
+
+          it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: 'remote-ip-addr') }
+        end
+
+        context 'when nothing specifies remote addr' do
+          before { %w[REMOTE_ADDR HTTP_X_FORWARDED_FOR].each { |env_key| env.delete(env_key) } }
+
+          it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: '-') }
+        end
+      end
+
+      context 'when env values changed during the next middleware call' do
+        let(:next_middleware_logic) do
+          lambda do |env|
+            env['PATH_INFO'] = '/cat'
+            env['REQUEST_METHOD'] = 'NOPE_TRACE'
+            env['QUERY_STRING'] = 'q=no'
+            env['REMOTE_ADDR'] = 'yo mama!'
+          end
+        end
+
+        it { expect { after_call }.to log_with logger, :info, hash_including(request_method: 'GET') }
+        it { expect { after_call }.to log_with logger, :info, hash_including(request_path: '/rspec/test/uri') }
+        it { expect { after_call }.to log_with logger, :info, hash_including(query_string: 'k=v') }
+        it { expect { after_call }.to log_with logger, :info, hash_including(remote_ip: '-') }
+
+        context "and a not tracked path changes it's path_info" do
+          before { middleware_config[:exclude_path] = env[Rack::PATH_INFO] }
+
+          it { expect(logger).to_not receive(:info); after_call }
+        end
       end
     end
   end

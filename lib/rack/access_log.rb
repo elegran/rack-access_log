@@ -29,7 +29,7 @@ module Rack
         request_path: request.path_info,
         query_string: request.query_string,
         request_method: request.request_method,
-        body: request.body.string
+        body: request.body.read
       }
     end
 
