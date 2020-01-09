@@ -24,12 +24,14 @@ module Rack
     end
 
     def create_log_message_base(request)
+      request_body = request.body.read
+      request.body.rewind
       {
         remote_ip: request.ip || '-',
         request_path: request.path_info,
         query_string: request.query_string,
         request_method: request.request_method,
-        body: request.body.read
+        body: request_body
       }
     end
 
