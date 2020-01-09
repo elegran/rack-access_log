@@ -50,7 +50,10 @@ RSpec.describe Rack::AccessLog do
     context 'when the request has body' do
       let(:body) { 'body' }
 
-      it { expect { after_call }.to log_with logger, :info, hash_including(body: body) }
+      specify do
+        expect { after_call }.to log_with logger, :info, hash_including(body: body)
+        expect(env['rack.input'].read).to eq 'body'
+      end
 
       describe 'exclude_path option' do
         before { middleware_config[:exclude_path] = '/rspec/test/uri' }
