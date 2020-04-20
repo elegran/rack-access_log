@@ -10,7 +10,9 @@ The implementation doesn't depend on any webframework or monkey patch.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'rack-access_log'
+source 'https://rubygems.pkg.github.com/elegran' do
+  gem 'rack-access_log'
+end
 ```
 
 And then execute:
@@ -59,6 +61,13 @@ run proc{|env| Rack::Response.new.finish }
 ```
 
 That's all Folks!
+
+## Publishing a new version
+
+1. bump the version in `lib/rack/access_log/version.rb`
+2. `$ echo ":github: Bearer ${GH_TOKEN}" >> ~/.gem/credentials`
+3. `$ gem build rack-access_log.gemspec`
+4. `$ gem push --key github --host https://rubygems.pkg.github.com/elegran rack-access_log-[YOUR_VERSION].gem`
 
 ## Contributing
 

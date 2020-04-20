@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
   spec.bindir        = 'exe'
   spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+  spec.metadata      = { 'github_repo' => 'ssh://github.com/elegran/rack-access_log' }
 
   spec.add_dependency 'rack', '>= 0.9'
 
